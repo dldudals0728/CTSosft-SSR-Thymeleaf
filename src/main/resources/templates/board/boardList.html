@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .board__container {
+            border: 3px solid black;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .board__head {
+            border-bottom: 1px solid gray;
+        }
+
+        .board__head > th {
+            padding: 18px 12px;
+            margin-bottom: 50px;
+        }
+
+        .board__row {
+            border-bottom: 1px solid lightgray;
+            margin-bottom: 12px;
+        }
+
+        .board__row > td {
+            padding: 12px 12px;
+        }
+
+        .board__search__container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .board__nav {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+
+        ul {
+            list-style: none;
+        }
+        ul li {
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="width: 50%;">
+        <div style="display: flex; flex-direction: row; justify-content: flex-end">
+            <div class="board__search__container">
+                <form th:object="${boardSearchDto}" action="/board/search" method="get">
+                    <select th:field="*{category}">
+                        <option th:value="title">제목</option>
+                        <option th:value="content">본문</option>
+                        <option th:value="both">제목 + 본문</option>
+                    </select>
+                    <input placeholder="검색어 입력" th:field="*{keyword}" />
+                    <button>검색</button>
+                </form>
+            </div>
+        </div>
+        <table class="board__container">
+            <thead style="margin-bottom: 24px">
+            <tr class="board__head">
+                <th>번호</th>
+                <th>글 제목</th>
+                <th>작성자</th>
+                <th>작성일</th>
+                <th>조회수</th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr th:each="board, status: ${boardList}" class="board__row" style="cursor: pointer;" th:onclick="|location.href='@{/board/content(id=${board.id})}'|">
+                    <td th:text="${status.count}"></td>
+                    <td th:text="${board.title}"></td>
+                    <td th:text="${board.writer}"></td>
+                    <td th:text="${board.regTime}"></td>
+                    <td th:text="${board.count}"></td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="display: flex; flex-direction: row; justify-content: flex-end">
+            <form action="/board/write" method="get">
+                <button>글쓰기</button>
+            </form>
+        </div>
+        <div class="board__nav">
+            <nav>
+                <ul>
+                    <li>1</li>
+                    <li>2</li>
+                    <li>3</li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</body>
+</html>

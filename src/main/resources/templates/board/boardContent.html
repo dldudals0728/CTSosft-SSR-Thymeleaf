@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        div {
+            border: 3px solid skyblue;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h2>title</h2>
+    <h3 th:text="${board.getTitle()}"></h3>
+</div>
+<div>
+    <h5>writer</h5>
+    <h5 th:text="${board.writer}"></h5>
+</div>
+<div>
+    <h2>content</h2>
+    <p th:text="${board.content}">content</p>
+</div>
+</body>
+</html>
