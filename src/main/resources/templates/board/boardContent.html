@@ -10,17 +10,27 @@
     </style>
 </head>
 <body>
-<div>
-    <h2>title</h2>
-    <h3 th:text="${board.getTitle()}"></h3>
-</div>
-<div>
-    <h5>writer</h5>
-    <h5 th:text="${board.writer}"></h5>
-</div>
-<div>
-    <h2>content</h2>
-    <p th:text="${board.content}">content</p>
+<div style="width: 50%;">
+    <div>
+        <h2>title</h2>
+        <h3 th:text="${board.getTitle()}"></h3>
+    </div>
+    <div>
+        <h5>writer</h5>
+        <h5 th:text="${board.writer}"></h5>
+    </div>
+    <div>
+        <h2>content</h2>
+        <p th:text="${board.content}">content</p>
+    </div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+        <form>
+            <button>수정</button>
+        </form>
+        <form>
+            <button>삭제</button>
+        </form>
+    </div>
 </div>
 </body>
 </html>

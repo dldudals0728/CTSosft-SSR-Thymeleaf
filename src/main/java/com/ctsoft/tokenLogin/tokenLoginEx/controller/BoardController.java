@@ -6,6 +6,10 @@ import com.ctsoft.tokenLogin.tokenLoginEx.entity.Board;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.BoardService;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +28,8 @@ public class BoardController {
     private final UserService userService;
     private final BoardService boardService;
     @GetMapping("/")
-    public String mainBoard(HttpServletRequest request, Model model) {
+    public String mainBoard(HttpServletRequest request, Model model,
+                            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
         if (userId == null) {
             System.out.println("[UserController/user] userId is null!");
@@ -33,8 +38,12 @@ public class BoardController {
             System.out.println("[UserController/user] userId is '\"\"'!");
             return "redirect:/expire";
         }
-        List<Board> boardList = boardService.selectAllBoard();
+        Page<Board> boardList = boardService.selectAllBoard(pageable);
+        System.out.println("Board Page main.");
         System.out.println(boardList);
+        System.out.println(boardList.getTotalPages());
+        System.out.println(boardList.getNumber());
+        System.out.println(boardList.getPageable().getPageNumber());
         model.addAttribute("boardList", boardList);
         model.addAttribute("boardSearchDto", new BoardSearchDto());
         return "board/boardList";
@@ -71,12 +80,13 @@ public class BoardController {
     }
 
     @GetMapping("/search")
-    public String search(BoardSearchDto boardSearchDto, Model model) {
+    public String search(BoardSearchDto boardSearchDto, Model model,
+                         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         System.out.println(boardSearchDto.toString());
-        List<Board> boardList = boardService.searchBoard(boardSearchDto.getCategory(), boardSearchDto.getKeyword());
+        Page<Board> boardList = boardService.searchBoard(boardSearchDto.getCategory(), boardSearchDto.getKeyword(), pageable);
 
         model.addAttribute("boardList", boardList);
-        model.addAttribute("boardSearchDto", new BoardSearchDto());
+        model.addAttribute("boardSearchDto", boardSearchDto);
         return "/board/boardList";
     }
 }

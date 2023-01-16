@@ -45,6 +45,24 @@
         ul li {
             display: inline-block;
         }
+        .board__nav__button {
+            display: flex;
+            justify-content:  center;
+            align-items: center;
+            text-decoration: none;
+            color: black;
+            width: 25px;
+            height: 25px;
+            border: 1px solid lightgray;
+        }
+        a:active {
+            background-color: gray;
+            color: white;
+        }
+        .active {
+            background-color: gray;
+            color: white;
+        }
     </style>
 </head>
 
@@ -83,17 +101,35 @@
                 </tr>
             </tbody>
         </table>
-        <div style="display: flex; flex-direction: row; justify-content: flex-end">
+        <div style="display: flex; flex-direction: row; justify-content: space-between">
             <form action="/board/write" method="get">
                 <button>글쓰기</button>
             </form>
+            <form action="/" method="get">
+                <button>홈으로</button>
+            </form>
         </div>
         <div class="board__nav">
-            <nav>
+            <nav th:with="
+            pageNumber = ${boardList.pageable.pageNumber},
+            pageSize = ${boardList.pageable.pageSize},
+            totalPages = ${boardList.totalPages},
+            startPage = ${T(java.lang.Math).floor(pageNumber / pageSize) * pageSize + 1},
+            tempEndPage = ${startPage + pageSize - 1}, endPage = (${tempEndPage < totalPages ? tempEndPage : totalPages}),
+            currentPage=${param.page}">
                 <ul>
-                    <li>1</li>
-                    <li>2</li>
-                    <li>3</li>
+                    <li th:each="page : ${#numbers.sequence(startPage, endPage)}">
+                        <a class="board__nav__button"
+                           th:if="${boardSearchDto.getKeyword()}"
+                           th:text="${page}"
+                           th:href="@{/board/search/(category=${boardSearchDto.getCategory()}, keyword=${boardSearchDto.getKeyword()}, page=${page - 1})}"
+                           th:classappend="${page == pageNumber + 1} ? 'active'"></a>
+                        <a class="board__nav__button"
+                           th:unless="${boardSearchDto.getKeyword()}"
+                           th:text="${page}"
+                           th:href="@{/board/(page=${page - 1})}"
+                           th:classappend="${page == pageNumber + 1} ? 'active'"></a>
+                    </li>
                 </ul>
             </nav>
         </div>
