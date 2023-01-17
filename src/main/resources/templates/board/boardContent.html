@@ -7,6 +7,10 @@
         div {
             border: 3px solid skyblue;
         }
+
+        img {
+            /*width: 100%;*/
+        }
     </style>
 </head>
 <body>
@@ -24,8 +28,12 @@
         <p th:text="${board.content}">content</p>
     </div>
     <div>
-        <span th:if="${board.filename}" th:text="${'이미지 파일이 존재합니다.'}"></span>
-        <span th:unless="${board.filename}" th:text="${'이미지 파일이 존재하지 않습니다.'}"></span>
+        <th:block th:if="${board.filename}">
+            <img th:src="@{${board.filepath}}" th:alt="${'이미지가 존재하지 않습니다.'}">
+        </th:block>
+        <th:block th:unless="${board.filename}">
+            <span style="color: red;" th:text="${'업로드된 이미지가 없는 게시글 입니다.'}"></span>
+        </th:block>
     </div>
     <div style="display: flex; flex-direction: row; justify-content: space-between;">
         <form>
@@ -34,6 +42,9 @@
         <form>
             <button>삭제</button>
         </form>
+    </div>
+    <div style="width: 100%; border: 0;">
+        <button onclick="history.back()" style="width: 100%;">게시판으로 돌아가기</button>
     </div>
 </div>
 </body>

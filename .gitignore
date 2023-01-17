@@ -35,3 +35,6 @@ build/
 ### spring boot ###
 application.properties
 image
+
+## mac ##
+.DS_Store

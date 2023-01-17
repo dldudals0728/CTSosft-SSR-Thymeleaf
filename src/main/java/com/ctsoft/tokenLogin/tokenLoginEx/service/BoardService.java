@@ -9,6 +9,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -71,14 +74,44 @@ public class BoardService {
             board = this.createBoard(boardDto, writer);
         } else {
             System.out.println("there is upload file.");
-            String filename = uuid + "_" + file.getOriginalFilename();
+            String filename = uuid + "_" + Objects.requireNonNull(file.getOriginalFilename()).replaceAll(" ", "_");
             String filepath = "/image/" + filename;
+            String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
             board = this.createBoard(boardDto, writer, filename, filepath);
 
-            File saveFile = new File(projectPath, filename);
-            file.transferTo(saveFile);
+//            File saveFile = new File(projectPath, filename);
+//            file.transferTo(saveFile);
+            resizeImage(file, projectPath + "/" + filename, extension);
         }
         return boardRepository.save(board);
+    }
+
+    public void resizeImage(MultipartFile file, String filepath, String formatName) throws IOException {
+        BufferedImage bufferedImage = ImageIO.read(file.getInputStream());
+        int originWidth = bufferedImage.getWidth();
+        int originHeight = bufferedImage.getHeight();
+
+        int newWidth = 500;
+        if(originWidth > newWidth) {
+            int newHeight = (originHeight * newWidth) / originWidth;
+            // 이미지 품질 설정
+            // Image.SCALE_DEFAULT : 기본 이미지 스케일링 알고리즘 사용
+            // Image.SCALE_FAST : 이미지 부드러움보다 속도 우선
+            // Image.SCALE_REPLICATE : ReplicateScaleFilter 클래스로 구체화 된 이미지 크기 조절 알고리즘
+            // Image.SCALE_SMOOTH : 속도보다 이미지 부드러움을 우선
+            // Image.SCALE_AREA_AVERAGING : 평균 알고리즘 사용
+            Image resizeImage = bufferedImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+            BufferedImage newImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+            Graphics graphics = newImage.getGraphics();
+            graphics.drawImage(resizeImage, 0, 0, null);
+            graphics.dispose();
+
+            // image 저장
+            File newFile = new File(filepath);
+            ImageIO.write(newImage, formatName, newFile);
+        } else {
+            file.transferTo(new File(filepath));
+        }
     }
 
     public Page<Board> selectAllBoard(Pageable pageable) {
