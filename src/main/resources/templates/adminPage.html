@@ -10,8 +10,8 @@
         <p>사용자 아이디: <span th:text="${userId}"></span></p>
         <p>사용자 이메일: <span th:text="${userEmail}"></span></p>
     </th:block>
-    <th:block th:unless="${userId}">
-        <p>로그인된 유저가 없습니다.</p>
+    <th:block th:if="${isAdmin} == false">
+        <p style="color: red;">해당 계정은 관리자 계정이 아닙니다!</p>
     </th:block>
     <p>사용자 로그인 정보</p>
     <form action="/" method="get">

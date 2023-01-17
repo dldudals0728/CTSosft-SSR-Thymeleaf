@@ -25,7 +25,6 @@ public class UserService {
         if (isJoinedUser(user.getUserId())) {
             return null;
         }
-        user.setRole(Role.USER);
         return userRepository.save(user);
     }
 

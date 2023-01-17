@@ -16,7 +16,15 @@
     </label> <br/>
     <label>Email
         <input type="email" name="email" placeholder="Email"/>
-    </label> <br/>
+    </label>
+    <div>
+        <span>권한</span>
+        <select name="role">
+            <option value="USER">USER</option>
+            <option value="ADMIN">ADMIN</option>
+        </select>
+    </div>
+    <br/>
     <button>회원가입</button>
     <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}" />
 </form>

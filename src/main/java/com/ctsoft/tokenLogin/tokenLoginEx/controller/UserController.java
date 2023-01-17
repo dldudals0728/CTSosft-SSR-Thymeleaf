@@ -84,7 +84,7 @@ public class UserController {
         String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
         if (userId == null) {
             System.out.println("[UserController/admin] userId is null!");
-            return "adminPage";
+            return "redirect:/login";
         } else if (userId.equals("")) {
             System.out.println("[UserController/admin] userId is '\"\"'!");
             return "redirect:/expire";
@@ -95,12 +95,17 @@ public class UserController {
             return "adminPage";
         }
 
+        System.out.println("ROLE check");
+        System.out.println(user.getRole() == Role.ADMIN);
+
         if (user.getRole() != Role.ADMIN) {
-            return "redirect:/";
+            model.addAttribute("isAdmin", false);
+            return "adminPage";
         }
 
         model.addAttribute("userId", user.getUserId());
         model.addAttribute("userEmail", user.getEmail());
+        model.addAttribute("isAdmin", true);
 
         return "adminPage";
     }
@@ -112,6 +117,7 @@ public class UserController {
 
     @PostMapping("/join")
     public String joinUser(User user) {
+        System.out.println("회원가입");
         System.out.println(user.toString());
         User joinedUser = userService.joinUser(user);
         if (joinedUser == null) {
@@ -132,7 +138,7 @@ public class UserController {
         System.out.println("login control");
         System.out.println(user.getUserId());
         Map<String, Object> myClaims = new HashMap<>();
-        myClaims.put("role", "ADMIN");
+        myClaims.put("role", user.getRole());
         String accessToken = URLEncoder.encode(jwtTokenProvider.generateAccessToken(user.getUserId(), myClaims), StandardCharsets.UTF_8);
         Cookie cookie = new Cookie("jdhToken", "Bearer_" + accessToken);
         cookie.setPath("/");
