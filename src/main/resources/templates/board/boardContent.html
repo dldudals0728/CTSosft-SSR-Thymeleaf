@@ -13,7 +13,7 @@
 <div style="width: 50%;">
     <div>
         <h2>title</h2>
-        <h3 th:text="${board.getTitle()}"></h3>
+        <h3 th:text="${board.title}"></h3>
     </div>
     <div>
         <h5>writer</h5>
@@ -22,6 +22,10 @@
     <div>
         <h2>content</h2>
         <p th:text="${board.content}">content</p>
+    </div>
+    <div>
+        <span th:if="${board.filename}" th:text="${'이미지 파일이 존재합니다.'}"></span>
+        <span th:unless="${board.filename}" th:text="${'이미지 파일이 존재하지 않습니다.'}"></span>
     </div>
     <div style="display: flex; flex-direction: row; justify-content: space-between;">
         <form>

@@ -55,3 +55,26 @@ thymeleaf에서 java.lang.Math를 사용할 수 있다.(T(Math))<br>
 </nav>
 ```
 T(Math)로 사용하는 것이 아닌, 전체 경로로 표기하여 T(java.lang.Math)로 사용해야 에러가 나지 않는다!
+
+## thymeleaf error: Could not parse as expression:
+타임리프에서 다음과 같은 에러가 출력되었으면, th:text=""(예시)에서 "" 안에 ${} 문법이 들어갔는지 확인해보자.<br>
+${}을 사용하지 않으면 에러가 난다.
+
+
+> 잘못된 예
+> ```html
+> <span th:text="이미지가 존재하지 않습니다."></span>
+> ```
+
+
+> 옳바른 예
+> ```html
+> <span th:text="${'이미지가 존재하지 않습니다.'}"></span>
+> ```
+
+## form tag: file 전송
+spring boot 에서 file 을 전달받기 위한 매개변수로 MultipartFile을 사용한다.<br>
+해당 데이터를 넘겨주려면 form 태그의 enctype 속성으로 multipart/form-data 값을 넘겨준다.
+```html
+<form action="" method="post" enctype="multipart/form-data"></form>
+```

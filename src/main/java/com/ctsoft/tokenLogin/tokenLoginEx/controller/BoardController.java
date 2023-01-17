@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.List;
 
 @Controller
@@ -55,7 +57,10 @@ public class BoardController {
     }
 
     @PostMapping("/write")
-    public String write(HttpServletRequest request, BoardDto boardDto) {
+    public String write(HttpServletRequest request, BoardDto boardDto, MultipartFile file) throws IOException {
+        System.out.println("write post");
+        System.out.println(file.getOriginalFilename());
+        System.out.println(System.getProperty("user.dir"));
         String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
         if (userId == null) {
             System.out.println("[UserController/user] userId is null!");
@@ -65,7 +70,7 @@ public class BoardController {
             return "redirect:/expire";
         }
 
-        Board board = boardService.write(boardDto, userId);
+        Board board = boardService.write(boardDto, userId, file);
         System.out.println(board.toString());
 
         return "redirect:/board/";
