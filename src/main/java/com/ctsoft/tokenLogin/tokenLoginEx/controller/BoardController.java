@@ -1,5 +1,6 @@
 package com.ctsoft.tokenLogin.tokenLoginEx.controller;
 
+import com.ctsoft.tokenLogin.tokenLoginEx.constant.Role;
 import com.ctsoft.tokenLogin.tokenLoginEx.dto.BoardDto;
 import com.ctsoft.tokenLogin.tokenLoginEx.dto.BoardSearchDto;
 import com.ctsoft.tokenLogin.tokenLoginEx.entity.Board;
@@ -77,10 +78,22 @@ public class BoardController {
     }
 
     @GetMapping("/content")
-    public String content(@RequestParam(value = "id", required = true) long id, Model model) {
-        System.out.println("id: " + id);
+    public String content(HttpServletRequest request, @RequestParam(value = "id", required = true) long id, Model model) {
+        String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
+        Role userRole = Role.valueOf(userService.getUserRoleFromToken(request, "jdhToken", 7));
+        System.out.println("userRole in board controller : " + userRole);
+        System.out.println(userRole == Role.ADMIN);
+        if (userId == null) {
+            System.out.println("[UserController/user] userId is null!");
+            return "redirect:/login";
+        } else if (userId.equals("")) {
+            System.out.println("[UserController/user] userId is '\"\"'!");
+            return "redirect:/expire";
+        }
         Board board = boardService.selectBoardById(id);
         model.addAttribute("board", board);
+        model.addAttribute("role", userRole);
+        model.addAttribute("userId", userId);
         return "/board/boardContent";
     }
 
@@ -93,5 +106,12 @@ public class BoardController {
         model.addAttribute("boardList", boardList);
         model.addAttribute("boardSearchDto", boardSearchDto);
         return "/board/boardList";
+    }
+
+    @PostMapping("/delete")
+    public String delete(HttpServletRequest request, @RequestParam(value = "id", required = true) long id) {
+        // role: USER ==> 자신의 게시글만 삭제할 수 있음 | role: ADMIN ==> 전체 게시글 삭제 가능으로 변경 필요.
+        boardService.deleteBoard(id);
+        return "redirect:/board/";
     }
 }

@@ -75,4 +75,26 @@ public class UserService {
     public User getUserWithUserId(String userId) {
         return userRepository.findByUserId(userId);
     }
+
+    public String getUserRoleFromToken(HttpServletRequest request, String cookieName, int cookiePrefixLength) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+
+        for (Cookie cookie:cookies) {
+            if (Objects.equals(cookie.getName(), cookieName)) {
+                String token = cookie.getValue().substring(cookiePrefixLength);
+                if (!jwtTokenProvider.validateToken(token)) {
+                    return "";
+                }
+                String userRole = jwtTokenProvider.getTokenInfoFromToken(token, "role");
+                System.out.println("userRole : " + userRole);
+                System.out.println(jwtTokenProvider.simpleGetClaimFromToken(token));
+                return userRole;
+            }
+        }
+
+        return null;
+    }
 }

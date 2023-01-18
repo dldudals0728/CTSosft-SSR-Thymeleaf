@@ -134,4 +134,12 @@ public class BoardService {
         }
         return boardList;
     }
+
+    public void deleteBoard(long id) {
+        Board board = boardRepository.findById(id);
+        if (board == null) {
+            return;
+        }
+        boardRepository.deleteById(id);
+    }
 }

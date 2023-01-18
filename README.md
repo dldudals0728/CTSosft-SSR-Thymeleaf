@@ -78,3 +78,18 @@ spring boot 에서 file 을 전달받기 위한 매개변수로 MultipartFile을
 ```html
 <form action="" method="post" enctype="multipart/form-data"></form>
 ```
+
+## thymeleaf: enum data 사용
+thymeleaf에서 enum data 사용 및 비교가 가능하다.
+```java
+public enum Role {
+    ADMIN, USER
+}
+```
+위와 같은 enum data가 존재할 때, Model을 통해 Role.ADMIN을 넘겨주었다면, thymeleaf에서 이렇게 사용이 가능하다.
+```html
+<th:block th:if="${role == T(com.ctsoft.tokenLogin.tokenLoginEx.constant.Role).ADMIN}">
+</th:block>
+```
+
+T() 문법으로 Role을 감싸주는데, enum data의 <i><b>전체 패키기 경로</b></i>를 이용하여 사용해야 한다!!

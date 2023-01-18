@@ -35,14 +35,16 @@
             <span style="color: red;" th:text="${'업로드된 이미지가 없는 게시글 입니다.'}"></span>
         </th:block>
     </div>
-    <div style="display: flex; flex-direction: row; justify-content: space-between;">
-        <form>
-            <button>수정</button>
-        </form>
-        <form>
-            <button>삭제</button>
-        </form>
-    </div>
+    <th:block th:if="${userId == board.writer} or ${role == T(com.ctsoft.tokenLogin.tokenLoginEx.constant.Role).ADMIN}">
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+            <form>
+                <button>수정</button>
+            </form>
+            <form th:action="@{/board/delete/(id=${board.id})}" method="post">
+                <button>삭제</button>
+            </form>
+        </div>
+    </th:block>
     <div style="width: 100%; border: 0;">
         <button onclick="history.back()" style="width: 100%;">게시판으로 돌아가기</button>
     </div>
