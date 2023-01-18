@@ -1,26 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
 <body>
-    <div>
-        <h2>게시글 입력</h2>
-        <form action="" method="post" enctype="multipart/form-data">
-            <div>
+<div>
+    <h2>게시글 입력</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        <div>
             <label>제목
-                <input name="title" placeholder="제목" />
+                <input th:if="${prevBoard}" name="title" placeholder="제목" th:value="${prevBoard.title}"/>
+                <input th:unless="${prevBoard}" name="title" placeholder="제목"/>
             </label>
-            </div>
-            <div>
+        </div>
+        <div>
             <label>본문
-                <textarea name="content" placeholder="내용 입력"></textarea>
+                <textarea th:if="${prevBoard}" name="content" placeholder="내용 입력"
+                          th:utext="${prevBoard.content}"></textarea>
+                <textarea th:unless="${prevBoard}" name="content" placeholder="내용 입력"></textarea>
             </label>
-                <input type="file" name="file" />
-            </div>
-            <button>글 작성</button>
-        </form>
-    </div>
+            <input type="file" name="file"/>
+            <input th:if="${prevBoard}" type="hidden" name="id" th:value="${currentId}" />
+            <input th:if="${prevBoard}" type="hidden" name="viewCount" th:value="${prevBoard.count}" />
+        </div>
+        <button>글 작성</button>
+        <button onclick="history.back()">취소</button>
+    </form>
+</div>
 </body>
 </html>

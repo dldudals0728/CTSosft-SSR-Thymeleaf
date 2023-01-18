@@ -93,3 +93,28 @@ public enum Role {
 ```
 
 T() 문법으로 Role을 감싸주는데, enum data의 <i><b>전체 패키기 경로</b></i>를 이용하여 사용해야 한다!!
+
+## form tag: get method
+form tag 에서 get method 는, <i><b>기존의 쿼리를 모두 날리고, form tag 내부에 있는 값들을 전송</b></i>한다!!<br>
+따라서, form tag의 get method를 이용하려면, form 태그 내부에 input을 넣고, type="hidden"을 이용하여 값을 전달하면 된다.
+
+> 틀린 예
+> ```html
+> <form th:action="@{/board/update(id=${board.id})}" method="get">
+>     <button>수정</button>
+> </form>
+> ```
+
+> 맞는 예
+> ```html
+> <form th:action="@{/board/update(id=${board.id})}" method="get">
+>     <input type="hidden" name="id" th:value="${board.id}" />
+>     <button>수정</button>
+> </form>
+> ```
+
+## thymeleaf: innerHTML
+thymeleaf에서 innerHTML을 담당하는 속성은 th:utext="${}" 이다.
+
+## form tag: 꿀팁!
+from tag 에서 action 값을 빈 문자열로 주고 method를 post로 주면, <i><b>해당 url의 get mapping이 아닌 post mapping으로 값을 전달</b></i>해준다!!! 완전 개꿀팁.

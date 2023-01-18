@@ -30,6 +30,7 @@ public class BoardController {
 
     private final UserService userService;
     private final BoardService boardService;
+
     @GetMapping("/")
     public String mainBoard(HttpServletRequest request, Model model,
                             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
@@ -60,8 +61,6 @@ public class BoardController {
     @PostMapping("/write")
     public String write(HttpServletRequest request, BoardDto boardDto, MultipartFile file) throws IOException {
         System.out.println("write post");
-        System.out.println(file.getOriginalFilename());
-        System.out.println(System.getProperty("user.dir"));
         String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
         if (userId == null) {
             System.out.println("[UserController/user] userId is null!");
@@ -109,9 +108,37 @@ public class BoardController {
     }
 
     @PostMapping("/delete")
-    public String delete(HttpServletRequest request, @RequestParam(value = "id", required = true) long id) {
+    public String delete(@RequestParam(value = "id", required = true) long id) {
         // role: USER ==> 자신의 게시글만 삭제할 수 있음 | role: ADMIN ==> 전체 게시글 삭제 가능으로 변경 필요.
         boardService.deleteBoard(id);
+        return "redirect:/board/";
+    }
+
+    @GetMapping("/update")
+    public String update(HttpServletRequest request, @RequestParam(value = "id", required = true) long id, Model model) {
+        Board board = boardService.selectBoardById(id);
+        model.addAttribute("prevBoard", board);
+        model.addAttribute("currentId", id);
+        return "/board/boardWrite";
+    }
+
+    @PostMapping("/update")
+    public String update(HttpServletRequest request, BoardDto boardDto,
+                         @RequestParam(value = "id", required = true) long id,
+                         @RequestParam(value = "viewCount") long viewCount,
+                         MultipartFile file) throws IOException {
+        System.out.println("update post");
+        System.out.println(boardDto.toString());
+        System.out.println(id);
+
+        String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
+        if (userId == null) {
+            return "redirect:/login";
+        } else if (userId.equals("")) {
+            return "redirect:/expire";
+        }
+
+        Board updateBoard = boardService.update(boardDto, id, userId, viewCount, file);
         return "redirect:/board/";
     }
 }

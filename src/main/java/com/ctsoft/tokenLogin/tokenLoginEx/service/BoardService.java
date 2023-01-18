@@ -25,7 +25,7 @@ public class BoardService {
     private final BoardRepository boardRepository;
 
     public void testCreate() {
-        for (int i=0; i < 50; i++) {
+        for (int i = 0; i < 50; i++) {
             Board board = new Board();
             board.setCount(i);
             board.setTitle("테스트 제목 " + i);
@@ -86,13 +86,41 @@ public class BoardService {
         return boardRepository.save(board);
     }
 
+    public Board update(BoardDto boardDto, long id, String writer, long viewCount, MultipartFile file) throws IOException {
+        Board prevBoard = boardRepository.findById(id);
+        if (prevBoard == null) {
+            return null;
+        }
+
+        prevBoard.setTitle(boardDto.getTitle());
+        prevBoard.setContent(boardDto.getContent());
+        prevBoard.setWriter(writer);
+        prevBoard.setCount(viewCount);
+        prevBoard.setRegTime(LocalDateTime.now());
+
+        if (!Objects.equals(file.getOriginalFilename(), "")) {
+            String projectPath = System.getProperty("user.dir") + "/src/main/resources/static/image";
+            UUID uuid = UUID.randomUUID();
+
+            String filename = uuid + "_" + Objects.requireNonNull(file.getOriginalFilename()).replaceAll(" ", "_");
+            String filepath = "/image/" + filename;
+            String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+            prevBoard.setFilename(filename);
+            prevBoard.setFilepath(filepath);
+
+            resizeImage(file, projectPath + "/" + filename, extension);
+        }
+
+        return boardRepository.save(prevBoard);
+    }
+
     public void resizeImage(MultipartFile file, String filepath, String formatName) throws IOException {
         BufferedImage bufferedImage = ImageIO.read(file.getInputStream());
         int originWidth = bufferedImage.getWidth();
         int originHeight = bufferedImage.getHeight();
 
         int newWidth = 500;
-        if(originWidth > newWidth) {
+        if (originWidth > newWidth) {
             int newHeight = (originHeight * newWidth) / originWidth;
             // 이미지 품질 설정
             // Image.SCALE_DEFAULT : 기본 이미지 스케일링 알고리즘 사용
@@ -141,5 +169,25 @@ public class BoardService {
             return;
         }
         boardRepository.deleteById(id);
+
+        if (board.getFilepath() != null) {
+            System.out.println("파일이 존재합니다!");
+            String projectPath = System.getProperty("user.dir") + "/src/main/resources/static";
+            File file = new File(projectPath + board.getFilepath());
+
+            // .isFile(): 파일이 존재하지 않거나 디렉토리일 경우 false, 파일일 경우 true를 반환 !
+            if (file.isFile()) {
+                System.out.println("파일 경로에 의한 파일이 존재합니다!");
+                if (file.delete()) {
+                    System.out.println("파일 삭제에 성공했습니다.");
+                } else {
+                    System.out.println("파일 삭제에 실패했습니다.");
+                }
+            } else {
+                System.out.println("파일 경로에 의한 파일이 존재하지 않습니다!");
+            }
+        } else {
+            System.out.println("파일이 존재하지 않습니다!");
+        }
     }
 }
