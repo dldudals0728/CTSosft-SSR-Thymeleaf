@@ -3,6 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>
+        const testFunc = () => {
+            const inputT = $('input[name=file]').val();
+            console.log(inputT);
+        }
+
+        const deleteFunc = () => {
+            $('input[name=file]').val("");
+            $(".selectedFile").attr("value", "");
+            $(".deleteFile").css("display", "none");
+        }
+    </script>
+    <style>
+        .upload__button {
+            padding: 6px 25px;
+            background-color: #FF6600;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        .selectedFile {
+            border: 0;
+        }
+    </style>
 </head>
 <body>
 <div>
@@ -20,13 +45,69 @@
                           th:utext="${prevBoard.content}"></textarea>
                 <textarea th:unless="${prevBoard}" name="content" placeholder="내용 입력"></textarea>
             </label>
-            <input type="file" name="file"/>
-            <input th:if="${prevBoard}" type="hidden" name="id" th:value="${currentId}" />
-            <input th:if="${prevBoard}" type="hidden" name="viewCount" th:value="${prevBoard.count}" />
+
+            <span th:if="${prevFile}" th:text="${'파일이 존재합니다.'}"></span>
+            <span th:unless="${prevFile}" th:text="${'파일이 존재하지 않습니다.'}"></span>
+            <input th:if="${prevBoard}" type="hidden" name="id" th:value="${currentId}"/>
+            <input th:if="${prevBoard}" type="hidden" name="viewCount" th:value="${prevBoard.count}"/>
+        </div>
+        <div style="margin: 0 25px; height: 64px; display: flex; align-items: center">
+            <label class="upload__button" for="file">
+                파일 업로드
+                <input type="file" name="file" id="file" style="display: none"/>
+            </label>
+        </div>
+        <div>
+            <th:block th:if="${prevBoard}">
+                <th:block th:if="${prevBoard.filename}">
+                    <!--                    <span th:text="${prevBoard.filename}" class="selectedFile"></span>-->
+                    <input readonly th:value="${prevBoard.filename}" class="selectedFile" name="currentFilename"/>
+                    <!--            수정모드로 진입 시 버튼 및 사진 업로드 처리부터 start!! -->
+                    <!--             + 파일(이미지) 선택 시 이미지 미리보기 사진 띄워주기!! -->
+                    <button type="button" class="deleteFile" onclick="deleteFunc()"
+                            style="display: inline-block; margin-left: 12px;">X
+                    </button>
+                </th:block>
+                <th:block th:unless="${prevBoard.filename}">
+                    <!--                    <span class="selectedFile"></span>-->
+                    <input readonly class="selectedFile" name="currentFilename"/>
+                    <!--            수정모드로 진입 시 버튼 및 사진 업로드 처리부터 start!! -->
+                    <!--             + 파일(이미지) 선택 시 이미지 미리보기 사진 띄워주기!! -->
+                    <button type="button" class="deleteFile" onclick="deleteFunc()"
+                            style="display: none; margin-left: 12px;">X
+                    </button>
+                </th:block>
+            </th:block>
+            <th:block th:unless="${prevBoard}">
+                <!--                <span class="selectedFile"></span>-->
+                <input readonly class="selectedFile" name="currentFilename"/>
+                <!--            수정모드로 진입 시 버튼 및 사진 업로드 처리부터 start!! -->
+                <!--             + 파일(이미지) 선택 시 이미지 미리보기 사진 띄워주기!! -->
+                <button type="button" class="deleteFile" onclick="deleteFunc()"
+                        style="display: none; margin-left: 12px;">X
+                </button>
+            </th:block>
         </div>
         <button>글 작성</button>
-        <button onclick="history.back()">취소</button>
+        <button type="button" onclick="history.back()">취소</button>
     </form>
 </div>
+<script>
+    $(document).ready(function () {
+        $('input[name=file]').change(function (e) {
+            const filePath = e.target.value;
+            console.log(filePath);
+            if (filePath === "") {
+                $(".selectedFile").attr("value", "");
+                $(".deleteFile").css("display", "none");
+            } else {
+                const strIdx = filePath.lastIndexOf("\\") + 1;
+                const fileName = filePath.substring(strIdx);
+                $(".selectedFile").attr("value", fileName);
+                $(".deleteFile").css("display", "inline-block");
+            }
+        });
+    });
+</script>
 </body>
 </html>

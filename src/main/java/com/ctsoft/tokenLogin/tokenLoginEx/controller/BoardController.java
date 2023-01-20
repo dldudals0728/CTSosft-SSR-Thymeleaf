@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -79,9 +80,6 @@ public class BoardController {
     @GetMapping("/content")
     public String content(HttpServletRequest request, @RequestParam(value = "id", required = true) long id, Model model) {
         String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
-        Role userRole = Role.valueOf(userService.getUserRoleFromToken(request, "jdhToken", 7));
-        System.out.println("userRole in board controller : " + userRole);
-        System.out.println(userRole == Role.ADMIN);
         if (userId == null) {
             System.out.println("[UserController/user] userId is null!");
             return "redirect:/login";
@@ -89,6 +87,7 @@ public class BoardController {
             System.out.println("[UserController/user] userId is '\"\"'!");
             return "redirect:/expire";
         }
+        Role userRole = Role.valueOf(userService.getUserRoleFromToken(request, "jdhToken", 7));
         Board board = boardService.selectBoardById(id);
         model.addAttribute("board", board);
         model.addAttribute("role", userRole);
@@ -119,13 +118,37 @@ public class BoardController {
         Board board = boardService.selectBoardById(id);
         model.addAttribute("prevBoard", board);
         model.addAttribute("currentId", id);
+
+
+        if (board.getFilepath() != null) {
+            String projectPath = System.getProperty("user.dir") + "/src/main/resources/static";
+            String filePath = projectPath + board.getFilepath();
+            File file = new File(filePath);
+
+            System.out.println("파일 테스트");
+            File file1 = new File(filePath);
+            File file2 = new File(board.getFilepath());
+
+            if (file1.isFile()) {
+                System.out.println("첫번째 파일이 존재합니다.");
+            }
+
+            if (file2.isFile()) {
+                System.out.println("두번째 파일이 존재합니다.");
+            }
+            if (file.isFile()) {
+                System.out.println("update: 파일이 존재합니다!");
+                model.addAttribute("prevFile", file);
+            }
+        }
         return "/board/boardWrite";
     }
 
     @PostMapping("/update")
     public String update(HttpServletRequest request, BoardDto boardDto,
                          @RequestParam(value = "id", required = true) long id,
-                         @RequestParam(value = "viewCount") long viewCount,
+                         @RequestParam(value = "viewCount", required = true) long viewCount,
+                         @RequestParam(value = "currentFilename", required = true) String currentFilename,
                          MultipartFile file) throws IOException {
         System.out.println("update post");
         System.out.println(boardDto.toString());
@@ -138,7 +161,10 @@ public class BoardController {
             return "redirect:/expire";
         }
 
-        Board updateBoard = boardService.update(boardDto, id, userId, viewCount, file);
+        Board updateBoard = boardService.update(boardDto, id, userId, viewCount, currentFilename, file);
+        System.out.println("viewCount : " + viewCount);
+        System.out.println("board id : " + id);
+        System.out.println("currentFilename : " + currentFilename);
         return "redirect:/board/";
     }
 }

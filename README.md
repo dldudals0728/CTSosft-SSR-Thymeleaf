@@ -118,3 +118,25 @@ thymeleaf에서 innerHTML을 담당하는 속성은 th:utext="${}" 이다.
 
 ## form tag: 꿀팁!
 from tag 에서 action 값을 빈 문자열로 주고 method를 post로 주면, <i><b>해당 url의 get mapping이 아닌 post mapping으로 값을 전달</b></i>해준다!!! 완전 개꿀팁.
+
+## input: form 형식 전달 시
+input 태그에 값을 입력하고 submit 하게 되면 input 값이 전달된다. 그러나 프로젝트 특성 상 input value를 수정할 수 없도록 하였다.<br>
+(선택된 파일만을 보여주도록 하기 위해!)
+
+```html
+<form action="" method="post">
+    <input disabled th:value="${prevBoard.filename}" class="selectedFile" name="currentFilename" />
+</form>
+```
+여기서 input value를 수정할 수 없도록 하기 위해 disabled 속성을 추가해 주었는데, controller 단에서 값을 받지 못한다.
+
+> 그 이유는 <i>disabled 속성은 form으로도 전송되지 않도록</i>하는 속성이기 때문이다!
+
+따라서 이런 경우, 즉 input value를 수정할 수 없도록 하지만, form 형식으로 전송하려고 한다면
+
+```html
+<form action="" method="post">
+    <input readonly th:value="${prevBoard.filename}" class="selectedFile" name="currentFilename" />
+</form>
+```
+disabled 속성 말고 readonly 속성을 이용해야 한다!!

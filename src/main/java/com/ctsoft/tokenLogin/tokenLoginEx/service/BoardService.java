@@ -86,7 +86,7 @@ public class BoardService {
         return boardRepository.save(board);
     }
 
-    public Board update(BoardDto boardDto, long id, String writer, long viewCount, MultipartFile file) throws IOException {
+    public Board update(BoardDto boardDto, long id, String writer, long viewCount, String currentFilename, MultipartFile file) throws IOException {
         Board prevBoard = boardRepository.findById(id);
         if (prevBoard == null) {
             return null;
@@ -98,20 +98,66 @@ public class BoardService {
         prevBoard.setCount(viewCount);
         prevBoard.setRegTime(LocalDateTime.now());
 
-        if (!Objects.equals(file.getOriginalFilename(), "")) {
-            String projectPath = System.getProperty("user.dir") + "/src/main/resources/static/image";
-            UUID uuid = UUID.randomUUID();
+        /*
+         * 비교 필요 항목
+         * 1. 이미지 X -> 이미지 X: prevBoard.filename = null / prevFilename = ""
+         * 2. 이미지 X -> 이미지 O
+         * 3. 이미지 O -> 이미지 X
+         * 4. 이미지 O -> 이미지 O
+         * *** 3번과 4번의 경우에는 이미지를 삭제 했는지, 그대로 두는지 판단할 필요가 있음
+         *
+         * 이전 이미지가 없다: prevBoard.filename == null
+         * 이전 이미지가 있다: prevBoard.filename != null ==> 이전 이미지가 있는 경우, prevBoard.filename이 이전 이미지 이름이 되겠네?
+         * */
 
-            String filename = uuid + "_" + Objects.requireNonNull(file.getOriginalFilename()).replaceAll(" ", "_");
-            String filepath = "/image/" + filename;
-            String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
-            prevBoard.setFilename(filename);
-            prevBoard.setFilepath(filepath);
+        // 기존 게시글에 이미지가 존재하지 않는 경우
+        if (prevBoard.getFilename() == null) {
+            // update 시 이미지를 추가한 경우
+            if (!Objects.equals(file.getOriginalFilename(), "")) {
+                String projectPath = System.getProperty("user.dir") + "/src/main/resources/static/image";
+                UUID uuid = UUID.randomUUID();
 
-            resizeImage(file, projectPath + "/" + filename, extension);
+                String filename = uuid + "_" + Objects.requireNonNull(file.getOriginalFilename()).replaceAll(" ", "_");
+                String filepath = "/image/" + filename;
+                String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+                prevBoard.setFilename(filename);
+                prevBoard.setFilepath(filepath);
+
+                resizeImage(file, projectPath + "/" + filename, extension);
+            }
+
+            return boardRepository.save(prevBoard);
+        } else {    // 기존 게시글에 이미지가 존재하는 경우
+            /*
+            * 1. 기존 이미지 삭제 ==> MultipartFile.getOriginalFilename() == "" && currentFilename == "" 일 경우
+            * 2. 기존 이미지에서 새로운 이미지로 변경 ==> MultipartFile.getOriginalFilename() != "" 일 경우에는 기존 파일 삭제 후 새로 저장!
+            * 3. 기존 이미지 유지 ==> MultipartFile.getOriginalFilename() == "" && currentFilename != "" 일 경우에는 아무것도 안함!
+            * */
+            // 새로운 이미지를 추가하지 않은 경우
+            if (Objects.equals(file.getOriginalFilename(), "")) {
+                if (Objects.equals(currentFilename, "")) {  // 기존에 있던 파일을 삭제한 경우
+                    this.deleteFile(boardRepository.findById(id));
+                    prevBoard.setFilepath(null);
+                    prevBoard.setFilename(null);
+
+                }
+            } else {    // 새로운 이미지를 추가한 경우
+                this.deleteFile(boardRepository.findById(id));
+
+                String projectPath = System.getProperty("user.dir") + "/src/main/resources/static/image";
+                UUID uuid = UUID.randomUUID();
+
+                String filename = uuid + "_" + Objects.requireNonNull(file.getOriginalFilename()).replaceAll(" ", "_");
+                String filepath = "/image/" + filename;
+                String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+                prevBoard.setFilename(filename);
+                prevBoard.setFilepath(filepath);
+
+                resizeImage(file, projectPath + "/" + filename, extension);
+
+            }
+            return boardRepository.save(prevBoard);
         }
-
-        return boardRepository.save(prevBoard);
     }
 
     public void resizeImage(MultipartFile file, String filepath, String formatName) throws IOException {
@@ -168,8 +214,11 @@ public class BoardService {
         if (board == null) {
             return;
         }
+        deleteFile(board);
         boardRepository.deleteById(id);
+    }
 
+    public void deleteFile(Board board) {
         if (board.getFilepath() != null) {
             System.out.println("파일이 존재합니다!");
             String projectPath = System.getProperty("user.dir") + "/src/main/resources/static";
