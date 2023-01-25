@@ -9,16 +9,6 @@
             const inputT = $('input[name=file]').val();
             console.log(inputT);
         }
-
-        const deleteFunc = () => {
-            const previewContainer = document.getElementsByClassName("preview__container")[0];
-            if (previewContainer.childElementCount === 1) {
-                previewContainer.removeChild(previewContainer.firstElementChild);
-            }
-            $('input[name=file]').val("");
-            $(".selectedFile").attr("value", "");
-            $(".deleteFile").css("display", "none");
-        }
     </script>
     <style>
         .upload__button {
@@ -136,7 +126,6 @@
     });
 
     const previewContainer = document.getElementsByClassName("preview__container")[0];
-    let hasImage = previewContainer.childElementCount === 1;
     const setImgPreview = (targetObj) => {
         console.log("===== TEST =====")
         console.log(targetObj === document.getElementById("file"));
@@ -144,8 +133,9 @@
         const file = targetObj.files[0];
         console.log(targetObj);
         console.log(file);
-        if (hasImage) {
-            console.log("it has image!!")
+        if (previewContainer.childElementCount === 1) {
+            console.log("it has image!!");
+            previewContainer.removeChild(previewContainer.firstElementChild);
         }
         const img = document.createElement("img");
         img.className = "board__img";
@@ -164,6 +154,18 @@
             };
         })(img);
         reader.readAsDataURL(file);
+    }
+
+    const deleteFunc = () => {
+        console.log("image delete function.")
+        const deletePreviewContainer = document.getElementsByClassName("preview__container")[0];
+        if (deletePreviewContainer.childElementCount === 1) {
+            console.log("it has child. delete img child.")
+            deletePreviewContainer.removeChild(deletePreviewContainer.firstElementChild);
+        }
+        $('input[name=file]').val("");
+        $(".selectedFile").attr("value", "");
+        $(".deleteFile").css("display", "none");
     }
 </script>
 </body>
