@@ -5,6 +5,7 @@ import com.ctsoft.tokenLogin.tokenLoginEx.dto.BoardDto;
 import com.ctsoft.tokenLogin.tokenLoginEx.dto.BoardSearchDto;
 import com.ctsoft.tokenLogin.tokenLoginEx.entity.Board;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.BoardService;
+import com.ctsoft.tokenLogin.tokenLoginEx.service.ImgService;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,6 +32,7 @@ public class BoardController {
 
     private final UserService userService;
     private final BoardService boardService;
+    private final ImgService imgService;
 
     @GetMapping("/")
     public String mainBoard(HttpServletRequest request, Model model,
