@@ -4,6 +4,7 @@ import com.ctsoft.tokenLogin.tokenLoginEx.constant.Role;
 import com.ctsoft.tokenLogin.tokenLoginEx.dto.BoardDto;
 import com.ctsoft.tokenLogin.tokenLoginEx.dto.BoardSearchDto;
 import com.ctsoft.tokenLogin.tokenLoginEx.entity.Board;
+import com.ctsoft.tokenLogin.tokenLoginEx.entity.Img;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.BoardService;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.ImgService;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.UserService;
@@ -24,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/board")
@@ -57,7 +59,15 @@ public class BoardController {
     }
 
     @GetMapping("/write")
-    public String boardWrite() {
+    public String boardWrite(HttpServletRequest request) {
+        String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
+        if (userId == null) {
+            System.out.println("[UserController/user] userId is null!");
+            return "redirect:/login";
+        } else if (userId.equals("")) {
+            System.out.println("[UserController/user] userId is '\"\"'!");
+            return "redirect:/expire";
+        }
         return "board/boardWrite";
     }
 
@@ -73,7 +83,15 @@ public class BoardController {
             return "redirect:/expire";
         }
 
-        Board board = boardService.write(boardDto, userId, file);
+        Board board = boardService.write(boardDto, userId);
+
+        if (Objects.equals(file.getOriginalFilename(), "")) {
+            System.out.println("there is no upload file.");
+        } else {
+            System.out.println("there is upload file.");
+            Img img = imgService.saveImg(file, board.getId());
+            System.out.println(img.toString());
+        }
         System.out.println(board.toString());
 
         return "redirect:/board/";
@@ -94,6 +112,10 @@ public class BoardController {
         model.addAttribute("board", board);
         model.addAttribute("role", userRole);
         model.addAttribute("userId", userId);
+        Img img = imgService.findBoardImg(id);
+        if (img != null) {
+            model.addAttribute("img", img);
+        }
         return "/board/boardContent";
     }
 
@@ -112,24 +134,27 @@ public class BoardController {
     public String delete(@RequestParam(value = "id", required = true) long id) {
         // role: USER ==> 자신의 게시글만 삭제할 수 있음 | role: ADMIN ==> 전체 게시글 삭제 가능으로 변경 필요.
         boardService.deleteBoard(id);
+        imgService.deleteImg(id);
         return "redirect:/board/";
     }
 
     @GetMapping("/update")
     public String update(HttpServletRequest request, @RequestParam(value = "id", required = true) long id, Model model) {
         Board board = boardService.selectBoardById(id);
+        Img img = imgService.findBoardImg(id);
         model.addAttribute("prevBoard", board);
+        model.addAttribute("img", img);
         model.addAttribute("currentId", id);
 
 
-        if (board.getFilepath() != null) {
+        if (img != null) {
             String projectPath = System.getProperty("user.dir") + "/src/main/resources/static";
-            String filePath = projectPath + board.getFilepath();
+            String filePath = projectPath + img.getFilepath();
             File file = new File(filePath);
 
             System.out.println("파일 테스트");
             File file1 = new File(filePath);
-            File file2 = new File(board.getFilepath());
+            File file2 = new File(img.getFilepath());
 
             if (file1.isFile()) {
                 System.out.println("첫번째 파일이 존재합니다.");
@@ -163,7 +188,8 @@ public class BoardController {
             return "redirect:/expire";
         }
 
-        Board updateBoard = boardService.update(boardDto, id, userId, viewCount, currentFilename, file);
+        Board updateBoard = boardService.update(boardDto, id, userId, viewCount);
+        Img updateImg = imgService.update(file, id, currentFilename);
         System.out.println("viewCount : " + viewCount);
         System.out.println("board id : " + id);
         System.out.println("currentFilename : " + currentFilename);

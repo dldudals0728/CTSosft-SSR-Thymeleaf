@@ -28,10 +28,10 @@
         <p th:text="${board.content}">content</p>
     </div>
     <div>
-        <th:block th:if="${board.filename}">
-            <img th:src="@{${board.filepath}}" th:alt="${'이미지가 존재하지 않습니다.'}">
+        <th:block th:if="${img}">
+            <img th:src="@{${img.filepath}}" th:alt="${'이미지가 존재하지 않습니다.'}" />
         </th:block>
-        <th:block th:unless="${board.filename}">
+        <th:block th:unless="${img}">
             <span style="color: red;" th:text="${'업로드된 이미지가 없는 게시글 입니다.'}"></span>
         </th:block>
     </div>
