@@ -189,7 +189,7 @@ public class ImgService {
         String originFilename = img.getOriginFilename();
         String contentDisposition = "attachment; filename=\"" + originFilename + "\"";
         String projectPath = System.getProperty("user.dir") + "/src/main/resources/static/image";
-        UrlResource resource = new UrlResource("file:" + projectPath + filename);
+        UrlResource resource = new UrlResource("file:" + projectPath + "/" + filename);
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition).body(resource);
     }
 }
