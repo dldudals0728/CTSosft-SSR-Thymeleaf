@@ -9,10 +9,12 @@ import com.ctsoft.tokenLogin.tokenLoginEx.service.BoardService;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.ImgService;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Objects;
 
@@ -116,6 +119,7 @@ public class BoardController {
         if (img != null) {
             model.addAttribute("img", img);
         }
+        this.boardService.updateViewCount(id);
         return "/board/boardContent";
     }
 
@@ -194,5 +198,9 @@ public class BoardController {
         System.out.println("board id : " + id);
         System.out.println("currentFilename : " + currentFilename);
         return "redirect:/board/";
+    }
+    @PostMapping("/download")
+    public ResponseEntity<UrlResource> downloadImage(@RequestParam(value = "id") long id) throws MalformedURLException {
+        return imgService.download(id);
     }
 }

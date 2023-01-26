@@ -140,3 +140,22 @@ input 태그에 값을 입력하고 submit 하게 되면 input 값이 전달된�
 </form>
 ```
 disabled 속성 말고 readonly 속성을 이용해야 한다!!
+
+## JPA: 데이터 수정(UPDATE, DELETE)
+JPA를 이용하여 UPDATE, DELETE를 수행할 때 주의햐아 할 사항이다.
+1. @Query 어노테이션을 이용할 경우, @Modifying 어노테이션을 <i><b>필수적으로</b></i> 추가해야 한다.
+2. 해당 기능을 호출하는 함수에 @Transactional 어노테이션을 <i><b>필수적으로</b></i> 추가해야 한다.
+
+예시: 클릭 시 조회수를 올려주는 기능
+```java
+@Modifying  // @Query annotation 을 이용하여 SELECT를 제외한 기능(UPDATE, DELETE 등)을 수행할 때 필수적으로 사용해야 함 !!
+@Query("update Board b set b.count = b.count + 1 where b.id = :id")
+int updateViewCount(@Param("id") long id);
+```
+
+```java
+@Transactional
+public int updateViewCount(long id) {
+    return this.boardRepository.updateViewCount(id);
+}
+```

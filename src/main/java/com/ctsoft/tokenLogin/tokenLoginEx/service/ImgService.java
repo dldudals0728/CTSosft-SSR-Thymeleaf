@@ -3,6 +3,9 @@ package com.ctsoft.tokenLogin.tokenLoginEx.service;
 import com.ctsoft.tokenLogin.tokenLoginEx.entity.Img;
 import com.ctsoft.tokenLogin.tokenLoginEx.repository.ImgRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,6 +14,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -174,5 +178,18 @@ public class ImgService {
                 return imgRepository.save(img);
             }
         }
+    }
+    public ResponseEntity<UrlResource> download(long boardIdx) throws MalformedURLException {
+        Img img = imgRepository.findByBoardIdx(boardIdx);
+
+        if (img == null) {
+            return null;
+        }
+        String filename = img.getFilename();
+        String originFilename = img.getOriginFilename();
+        String contentDisposition = "attachment; filename=\"" + originFilename + "\"";
+        String projectPath = System.getProperty("user.dir") + "/src/main/resources/static/image";
+        UrlResource resource = new UrlResource("file:" + projectPath + filename);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition).body(resource);
     }
 }

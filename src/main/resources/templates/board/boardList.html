@@ -63,6 +63,12 @@
             background-color: gray;
             color: white;
         }
+        tr td {
+            text-align: center;
+        }
+        tr td:nth-child(2) {
+            text-align: left;
+        }
     </style>
 </head>
 
@@ -96,7 +102,7 @@
                     <td th:text="${status.count}"></td>
                     <td th:text="${board.title}"></td>
                     <td th:text="${board.writer}"></td>
-                    <td th:text="${board.regTime}"></td>
+                    <td th:text="${#temporals.format(board.regTime, 'yyyy-MM-dd HH:mm')}"></td>
                     <td th:text="${board.count}"></td>
                 </tr>
             </tbody>
