@@ -28,6 +28,14 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    private String zonecode;
+
+    @Column(nullable = false)
+    private String address;
+
+    private String detailAddress;
+
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
 }

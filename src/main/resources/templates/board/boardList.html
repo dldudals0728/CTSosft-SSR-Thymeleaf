@@ -42,12 +42,14 @@
         ul {
             list-style: none;
         }
+
         ul li {
             display: inline-block;
         }
+
         .board__nav__button {
             display: flex;
-            justify-content:  center;
+            justify-content: center;
             align-items: center;
             text-decoration: none;
             color: black;
@@ -55,17 +57,21 @@
             height: 25px;
             border: 1px solid lightgray;
         }
+
         a:active {
             background-color: gray;
             color: white;
         }
+
         .active {
             background-color: gray;
             color: white;
         }
+
         tr td {
             text-align: center;
         }
+
         tr td:nth-child(2) {
             text-align: left;
         }
@@ -73,72 +79,82 @@
 </head>
 
 <body>
-    <div style="width: 50%;">
-        <div style="display: flex; flex-direction: row; justify-content: flex-end">
-            <div class="board__search__container">
-                <form th:object="${boardSearchDto}" action="/board/search" method="get">
-                    <select th:field="*{category}">
-                        <option th:value="title">제목</option>
-                        <option th:value="content">본문</option>
-                        <option th:value="both">제목 + 본문</option>
-                    </select>
-                    <input placeholder="검색어 입력" th:field="*{keyword}" />
-                    <button>검색</button>
-                </form>
-            </div>
-        </div>
-        <table class="board__container">
-            <thead style="margin-bottom: 24px">
-            <tr class="board__head">
-                <th>번호</th>
-                <th>글 제목</th>
-                <th>작성자</th>
-                <th>작성일</th>
-                <th>조회수</th>
-            </tr>
-            </thead>
-            <tbody>
-                <tr th:each="board, status: ${boardList}" class="board__row" style="cursor: pointer;" th:onclick="|location.href='@{/board/content(id=${board.id})}'|">
-                    <td th:text="${status.count}"></td>
-                    <td th:text="${board.title}"></td>
-                    <td th:text="${board.writer}"></td>
-                    <td th:text="${#temporals.format(board.regTime, 'yyyy-MM-dd HH:mm')}"></td>
-                    <td th:text="${board.count}"></td>
-                </tr>
-            </tbody>
-        </table>
-        <div style="display: flex; flex-direction: row; justify-content: space-between">
-            <form action="/board/write" method="get">
-                <button>글쓰기</button>
-            </form>
-            <form action="/" method="get">
-                <button>홈으로</button>
+<div style="width: 50%;">
+    <div style="display: flex; flex-direction: row; justify-content: flex-end">
+        <div class="board__search__container">
+            <form th:object="${boardSearchDto}" action="/board/search" method="get">
+                <select th:field="*{category}">
+                    <option th:value="title">제목</option>
+                    <option th:value="content">본문</option>
+                    <option th:value="both">제목 + 본문</option>
+                </select>
+                <input placeholder="검색어 입력" th:field="*{keyword}"/>
+                <button>검색</button>
             </form>
         </div>
-        <div class="board__nav">
-            <nav th:with="
+    </div>
+    <table class="board__container">
+        <thead style="margin-bottom: 24px">
+        <tr class="board__head">
+            <th>번호</th>
+            <th>글 제목</th>
+            <th>작성자</th>
+            <th>작성일</th>
+            <th>조회수</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${boardList.totalPages != 0}" th:each="board, status: ${boardList}" class="board__row" style="cursor: pointer;"
+            th:onclick="|location.href='@{/board/content(id=${board.id})}'|">
+                <td th:text="${status.count}"></td>
+                <td th:text="${board.title}"></td>
+                <td th:text="${board.writer}"></td>
+                <td th:text="${#temporals.format(board.regTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td th:text="${board.count}"></td>
+        </tr>
+        <tr th:unless="${boardList.totalPages != 0}">
+            <td colspan="5" style="font-weight: bolder; color: red; padding: 16px;">게시글이 존재하지 않습니다. 게시글을 작성해 보세요.</td>
+        </tr>
+        </tbody>
+    </table>
+    <div style="display: flex; flex-direction: row; justify-content: space-between">
+        <form action="/board/write" method="get">
+            <button>글쓰기</button>
+        </form>
+        <form action="/" method="get">
+            <button>홈으로</button>
+        </form>
+    </div>
+    <div class="board__nav">
+        <nav th:with="
             pageNumber = ${boardList.pageable.pageNumber},
             pageSize = ${boardList.pageable.pageSize},
             totalPages = ${boardList.totalPages},
             startPage = ${T(java.lang.Math).floor(pageNumber / pageSize) * pageSize + 1},
             tempEndPage = ${startPage + pageSize - 1}, endPage = (${tempEndPage < totalPages ? tempEndPage : totalPages}),
             currentPage=${param.page}">
-                <ul>
-                    <li th:each="page : ${#numbers.sequence(startPage, endPage)}">
-                        <a class="board__nav__button"
-                           th:if="${boardSearchDto.getKeyword()}"
-                           th:text="${page}"
-                           th:href="@{/board/search/(category=${boardSearchDto.getCategory()}, keyword=${boardSearchDto.getKeyword()}, page=${page - 1})}"
-                           th:classappend="${page == pageNumber + 1} ? 'active'"></a>
-                        <a class="board__nav__button"
-                           th:unless="${boardSearchDto.getKeyword()}"
-                           th:text="${page}"
-                           th:href="@{/board/(page=${page - 1})}"
-                           th:classappend="${page == pageNumber + 1} ? 'active'"></a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
+            <ul th:if="${boardList.totalPages != 0}">
+                <li th:each="page : ${#numbers.sequence(startPage, endPage)}">
+                    <a class="board__nav__button"
+                       th:if="${boardSearchDto.getKeyword()}"
+                       th:text="${page}"
+                       th:href="@{/board/search/(category=${boardSearchDto.getCategory()}, keyword=${boardSearchDto.getKeyword()}, page=${page - 1})}"
+                       th:classappend="${page == pageNumber + 1} ? 'active'"></a>
+                    <a class="board__nav__button"
+                       th:unless="${boardSearchDto.getKeyword()}"
+                       th:text="${page}"
+                       th:href="@{/board/(page=${page - 1})}"
+                       th:classappend="${page == pageNumber + 1} ? 'active'"></a>
+                </li>
+            </ul>
+            <ul th:unless="${boardList.totalPages != 0}">
+                <li>
+                    <a class="board__nav__button active"
+                       th:href="@{/board/search/(category=${boardSearchDto.getCategory()}, keyword=${boardSearchDto.getKeyword()}, page=0)}">1</a>
+                </li>
+            </ul>
+        </nav>
     </div>
+</div>
 </body>
 </html>

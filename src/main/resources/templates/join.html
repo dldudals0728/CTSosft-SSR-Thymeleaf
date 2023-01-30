@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>회원가입 페이지</title>
+    <style>
+        .long__input {
+            width: 300px;
+        }
+
+        input {
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+    </style>
 </head>
 <body>
 <h1>회원가입 페이지</h1>
@@ -17,6 +27,14 @@
     <label>Email
         <input type="email" name="email" placeholder="Email"/>
     </label>
+    <div style="margin-top: 24px; margin-bottom: 24px;">
+        <input readonly id="zonecode" name="zonecode" placeholder="우편번호" onclick="daumAddress()" />
+        <button type="button" onclick="daumAddress()">우편번호 찾기</button>
+        <br />
+        <input class="long__input" readonly id="address" name="address" placeholder="도로명주소" />
+        <br />
+        <input class="long__input" placeholder="상세주소" name="detailAddress" />
+    </div>
     <div>
         <span>권한</span>
         <select name="role">
@@ -26,12 +44,29 @@
     </div>
     <br/>
     <button>회원가입</button>
-    <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}" />
+    <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
 </form>
 <div>
     <form action="/" method="get">
         <button>홈으로 돌아가기</button>
     </form>
 </div>
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script>
+    function daumAddress() {
+        new daum.Postcode({
+            oncomplete: function (data) {
+                const zonecodeInput = document.getElementById("zonecode");
+                const addressInput = document.getElementById("address");
+
+                const zonecode = data.zonecode;
+                const address = data.address;
+
+                zonecodeInput.value = zonecode;
+                addressInput.value = address;
+            }
+        }).open();
+    }
+</script>
 </body>
 </html>
