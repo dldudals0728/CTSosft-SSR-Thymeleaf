@@ -9,7 +9,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +47,10 @@ public class BoardService {
         // 이미지 저장 테스트해보기 !! 그 전에 DB 구조 변경 필요.
         Board board = this.createBoard(boardDto, writer);
 
+        return boardRepository.save(board);
+    }
+
+    public Board write(Board board) {
         return boardRepository.save(board);
     }
 
@@ -94,5 +101,11 @@ public class BoardService {
     @Transactional
     public int updateViewCount(long id) {
         return this.boardRepository.updateViewCount(id);
+    }
+
+    public LocalDateTime dateToLocalDateTime(Date date) {
+        return date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
     }
 }

@@ -9,6 +9,12 @@ import com.ctsoft.tokenLogin.tokenLoginEx.service.BoardService;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.ImgService;
 import com.ctsoft.tokenLogin.tokenLoginEx.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +49,7 @@ public class BoardController {
     public String mainBoard(HttpServletRequest request, Model model,
                             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         String userId = userService.getUserIdFromToken(request, "jdhToken", 7);
+        String userRole = userService.getUserRoleFromToken(request, "jdhToken", 7);
         if (userId == null) {
             System.out.println("[UserController/user] userId is null!");
             return "redirect:/login";
@@ -58,6 +65,7 @@ public class BoardController {
         System.out.println(boardList.getPageable().getPageNumber());
         model.addAttribute("boardList", boardList);
         model.addAttribute("boardSearchDto", new BoardSearchDto());
+        model.addAttribute("role", userRole);
         return "board/boardList";
     }
 
@@ -202,5 +210,46 @@ public class BoardController {
     @PostMapping("/download")
     public ResponseEntity<UrlResource> downloadImage(@RequestParam(value = "id") long id) throws MalformedURLException {
         return imgService.download(id);
+    }
+
+    @PostMapping("/readExcel")
+    public String readExcel(@RequestParam(value = "file") MultipartFile file) throws IOException {
+        System.out.println("readExcel post start");
+        if (file == null) {
+            System.out.println("file is null!!");
+            return "redirect:/board/";
+        }
+        String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+        assert extension != null;
+        if (!extension.equals("xlsx") && !extension.equals("xls")) {
+            System.out.println("엑셀 파일만 업로드 가능합니다.");
+            return "redirect:/board/";
+        }
+
+        Workbook workbook;
+        if (extension.equals("xlsx")) {
+            workbook = new XSSFWorkbook(file.getInputStream());
+        } else {
+            workbook = new HSSFWorkbook(file.getInputStream());
+        }
+
+        Sheet worksheet = workbook.getSheetAt(0);
+
+        for (int i = 0; i < worksheet.getPhysicalNumberOfRows(); i++) {
+            Row row = worksheet.getRow(i);
+
+            Board board = new Board();
+
+            board.setTitle(row.getCell(0).getStringCellValue());
+            board.setContent(row.getCell(1).getStringCellValue());
+            board.setWriter(row.getCell(2).getStringCellValue());
+            board.setCount((long) row.getCell(3).getNumericCellValue());
+            board.setRegTime(boardService.dateToLocalDateTime(row.getCell(4).getDateCellValue()));
+
+            boardService.write(board);
+            System.out.println("[Excel Input]: " + (i + 1) + "번째 행 게시글 [" + row.getCell(0).getStringCellValue() + "] 가 저장되었습니다.");
+        }
+
+        return "redirect:/board/";
     }
 }

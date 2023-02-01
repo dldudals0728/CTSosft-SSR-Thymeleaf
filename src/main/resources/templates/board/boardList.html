@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <style>
         .board__container {
             border: 3px solid black;
@@ -75,12 +76,30 @@
         tr td:nth-child(2) {
             text-align: left;
         }
+
+        .excel__select {
+            padding: 3px 12px;
+            background-color: #FF6600;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+        }
     </style>
 </head>
 
 <body>
 <div style="width: 50%;">
-    <div style="display: flex; flex-direction: row; justify-content: flex-end">
+    <div style="display: flex; flex-direction: row; justify-content: space-between">
+        <div>
+            <form th:if="${role == 'ADMIN'}" action="/board/readExcel" method="post" enctype="multipart/form-data">
+                <label id="excel__select" class="excel__select" for="file">
+                    Excel 게시판 업로드
+                </label>
+                <input type="file" name="file" id="file" style="display: none;"/>
+                <button type="submit" id="excelUploadButton" disabled>Upload</button>
+            </form>
+        </div>
         <div class="board__search__container">
             <form th:object="${boardSearchDto}" action="/board/search" method="get">
                 <select th:field="*{category}">
@@ -104,13 +123,14 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:if="${boardList.totalPages != 0}" th:each="board, status: ${boardList}" class="board__row" style="cursor: pointer;"
+        <tr th:if="${boardList.totalPages != 0}" th:each="board, status: ${boardList}" class="board__row"
+            style="cursor: pointer;"
             th:onclick="|location.href='@{/board/content(id=${board.id})}'|">
-                <td th:text="${status.count}"></td>
-                <td th:text="${board.title}"></td>
-                <td th:text="${board.writer}"></td>
-                <td th:text="${#temporals.format(board.regTime, 'yyyy-MM-dd HH:mm')}"></td>
-                <td th:text="${board.count}"></td>
+            <td th:text="${status.count + boardList.pageable.pageNumber * 10}"></td>
+            <td th:text="${board.title}"></td>
+            <td th:text="${board.writer}"></td>
+            <td th:text="${#temporals.format(board.regTime, 'yyyy-MM-dd HH:mm')}"></td>
+            <td th:text="${board.count}"></td>
         </tr>
         <tr th:unless="${boardList.totalPages != 0}">
             <td colspan="5" style="font-weight: bolder; color: red; padding: 16px;">게시글이 존재하지 않습니다. 게시글을 작성해 보세요.</td>
@@ -156,5 +176,24 @@
         </nav>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $("#file").change(function (e) {
+            const fileSelectInput = $("#excel__select");
+            const submitButton = $("#excelUploadButton");
+            let isSelected;
+            isSelected = e.target.value !== "";
+            if (isSelected) {
+                fileSelectInput.css("background-color", "deepskyblue");
+                fileSelectInput.text("파일이 선택됨");
+                submitButton.removeAttr("disabled");
+            } else {
+                fileSelectInput.css("background-color", "#FF6600");
+                fileSelectInput.text("Excel 파일 선택");
+                submitButton.attr("disabled", "disabled");
+            }
+        });
+    });
+</script>
 </body>
 </html>

@@ -159,3 +159,88 @@ public int updateViewCount(long id) {
     return this.boardRepository.updateViewCount(id);
 }
 ```
+
+## spring boot - excel 파일 읽기
+의존성 추가
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi</artifactId>
+        <version>3.11</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi-ooxml</artifactId> <!-- 엑셀 2007 이상 버전에서 사용 -->
+        <version>3.11</version>
+    </dependency>
+</dependencies>
+```
++) 3.11말고 4.1.2 버전을 사용하길 권장!!
+
+## jquery: .text()
+jquery를 이용하여 파일 선택 시 파일이 선택되었음을 알려주는 기능을 추가했다.<br>
+type=file 인 input tag 를 사용해야 해서, css 변경을 위해 label의 for 속성을 이용하여 연결했다.
+```html
+<label id="excel__select" class="excel__select" for="file">
+    Excel 파일 선택
+    <input type="file" name="file" id="file" style="display: none;" />
+</label>
+```
+jquery는 다음과 같이 작성했다.
+
+```html
+<script>
+    $(document).ready(function() {
+        $("#file").change(function (e) {
+            const fileSelectInput = $("#excel__select");
+            const submitButton = $("#excelUploadButton");
+            let isSelected;
+            isSelected = e.target.value !== "";
+            if (isSelected) {
+                fileSelectInput.css("background-color", "deepskyblue");
+                fileSelectInput.text("파일이 선택됨");
+                submitButton.removeAttr("disabled");
+            } else {
+                fileSelectInput.css("background-color", "#FF6600");
+                fileSelectInput.text("Excel 파일 선택");
+                submitButton.attr("disabled", "disabled");
+            }
+        });
+    });
+</script>
+```
+jquery 코드를 보면, 파일이 선택되었을 때 label의 text를 변경하도록 했다.<br>
+그런데 나는 label tag를 이용하여 input tag를 감싸는 구조를 채택했고, 그로 인해 input tag가 없어져 버렸다....
+
+for 속성을 사용하려면 label 태그 안쪽에 해당 태그가 있어야 하는 줄 알았는데, 굳이 그럴 필요는 없었다.
+```html
+<label id="excel__select" class="excel__select" for="file">
+    Excel 파일 선택
+</label>
+<input type="file" name="file" id="file" style="display: none;" />
+```
+그래서 코드를 위처럼 변경하니까 잘 작동했다.
+
+> summary: $("#tag_id").text() 함수는, 해당 태그의 <i>안쪽의 요소를 변경한다!!!</i>
+
+#### 추가
+MultipartFile을 이용하여 파일을 받을 때 오류가 생긴다면, form 태그에 enctype을 지정해 주었는지 확인해보자!!
+```html
+<form action="/board/readExcel" method="post" enctype="multipart/form-data"></form>
+```
+
+## WARNING Report: An illegal reflective access operation has occurred
+spring boot 에서 Excel 파일을 읽기 위해 apache poi를 사용하니 아래와 같은 경고가 나왔다.
+```
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.poi.util.DocumentHelper (file:/Users/dev/.m2/repository/org/apache/poi/poi-ooxml/3.11/poi-ooxml-3.11.jar) to method com.sun.org.apache.xerces.internal.util.SecurityManager.setEntityExpansionLimit(int)
+WARNING: Please consider reporting this to the maintainers of org.apache.poi.util.DocumentHelper
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+```
+말 그대로 경고라 서버가 정상적으로 작동하긴 했지만, 뭔가 찜찜했다.<br>
+poi 의존성을 추가하여 사용하기 전에는 경고가 없었으나, 사용한 뒤에 해당 경고를 보았으니 문제는 해당 모듈에 있다고 생각하여
+모듈 버전을 바꿔보니 경고가 말끔히 사라졌다.
+
+> 3.11 -> 4.1.2로 변경
