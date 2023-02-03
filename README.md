@@ -244,3 +244,34 @@ poi 의존성을 추가하여 사용하기 전에는 경고가 없었으나, 사
 모듈 버전을 바꿔보니 경고가 말끔히 사라졌다.
 
 > 3.11 -> 4.1.2로 변경
+
+# OAuth2 Login
+의존성 추가
+```xml
+<dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-oauth2-client</artifactId>
+</dependency>
+```
+의존성 추가 후에 application-oauth.properties 파일을 작성한다.
+> git commit 시 해당 파일이 push 되지 않도록 .gitignore 에 필수로 추가해라!!
+
+```properties
+spring.security.oauth2.client.registration.google.client-id=[클라이언트 아이디]
+spring.security.oauth2.client.registration.google.client-secret=[클라이언트 비밀번호]
+spring.security.oauth2.client.registration.google.scope=profile,email
+```
+scope 기본값은 email, profile, openid 이렇게 3가지 이다.<br>
+이 중 openid는 scope에 추가하지 않느데, 그 이유는
+> openid가 있으면 OpenId Provider로 인식하기 때문인데, 이렇게 되면 OpenId Provider인 서비스와 그렇지 않은 서비스(네이버/카카오 등)로 나뉘다.<br>
+> 따라서 각각 OAuth2Service를 만들어야 하기 때문에 openid는 추가하지 않는다!!
+
+application-oauth.properties 파일을 작성했으면 application.properties 파일에 해당 파일을 등록해 정보를 가져올 수 있도록 해준다.
+```properties
+# application.properties 파일에 입력
+spring.profiles.include=oauth
+```
+> application-xxx.properties 파일을 만들면 xxx라는 profile이 생성되어 관리할 수 있다!<br>
+> 해당 정보를 가져오기 위해 application.properties 파일에 <i>spring.profiles.include=xxx</i> 를 입력하여 관리하도록 한다.
+
+## OAuth2 login: Google
