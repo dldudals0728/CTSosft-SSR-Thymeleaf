@@ -35,6 +35,7 @@ build/
 ### spring boot ###
 application.properties
 application-oauth.properties
+application-oauth.yml
 image
 
 ## mac ##

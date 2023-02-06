@@ -75,6 +75,13 @@
             <version>2.4</version>
         </dependency>
         <!-- file extension check -->
+        <!-- google oauth without spring security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- google oauth without spring security -->
 	</dependencies>
 
 	<build>

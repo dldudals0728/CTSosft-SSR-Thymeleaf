@@ -274,4 +274,17 @@ spring.profiles.include=oauth
 > application-xxx.properties 파일을 만들면 xxx라는 profile이 생성되어 관리할 수 있다!<br>
 > 해당 정보를 가져오기 위해 application.properties 파일에 <i>spring.profiles.include=xxx</i> 를 입력하여 관리하도록 한다.
 
-## OAuth2 login: Google
+## OAuth2 login: Without Spring Security
+
+### [Get Oauth without Spring Security README](https://github.com/dldudals0728/CTSosft-SSR-Thymeleaf/tree/main/src/main/java/com/ctsoft/tokenLogin/tokenLoginEx/oauth)
+
+# Weird Error
+OAuth2 인증을 실습하던 중 이상한 오류를 만났다.<br>
+(콘솔상에 생기는 오류가 아니라, 진짜 이상한 현상)
+
+OAuth2 인증을 위해 SecurityConfig 클래스를 만들어 테스트하다가, 잘못된 것 같아 SecurityConfig 클래스 파일을 삭재했다.<br>
+그런데 해당 파일을 삭제하고 나니 메인 페이지로 이동할 때 계속 Spring Security의 기본 login 페이지도 자동으로 이동되었다...!!
+
+분명 Spring Security 설정 파일인 SecurityConfig 파일을 삭제했는데 왜 자꾸 거기로 이동되는지 몰라 결국 프로젝트를 삭제하고 github 파일을 읽어서
+다시 실행하니 원래 상태로 실행되었다...<br>
+(아직도 이유를 모르겠음)
