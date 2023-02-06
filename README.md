@@ -276,7 +276,7 @@ spring.profiles.include=oauth
 
 ## OAuth2 login: Without Spring Security
 
-### [Get Oauth without Spring Security README](https://github.com/dldudals0728/CTSosft-SSR-Thymeleaf/tree/main/src/main/java/com/ctsoft/tokenLogin/tokenLoginEx/oauth)
+### [Get Oauth2 without Spring Security README](https://github.com/dldudals0728/CTSosft-SSR-Thymeleaf/tree/main/src/main/java/com/ctsoft/tokenLogin/tokenLoginEx/oauth)
 
 # Weird Error
 OAuth2 인증을 실습하던 중 이상한 오류를 만났다.<br>
