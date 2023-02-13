@@ -2,9 +2,11 @@ package com.ctsoft.tokenLogin.tokenLoginEx.oauth;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 // spring security의 ClientRegistration 역할
 @Getter
+@ToString
 public class OauthProvider {
     private final String clientId;
     private final String clientSecret;
@@ -14,6 +16,9 @@ public class OauthProvider {
 
     public OauthProvider(OauthProperties.User user, OauthProperties.Provider provider) {
         this(user.getClientId(), user.getClientSecret(), user.getRedirectUri(), provider.getTokenUri(), provider.getUserInfoUri());
+        System.out.println("[OauthProvider] OauthProvider F");
+        System.out.println(user);
+        System.out.println(provider);
     }
 
     @Builder

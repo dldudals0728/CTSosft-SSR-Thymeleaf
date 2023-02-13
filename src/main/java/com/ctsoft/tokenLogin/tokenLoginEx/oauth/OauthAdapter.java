@@ -8,6 +8,9 @@ public class OauthAdapter {
 
     // OauthProperties를 OauthProvider로 변환한다.
     public static Map<String, OauthProvider> getOauthProviders(OauthProperties properties) {
+        System.out.println("[OauthAdapter] getOauthProviders F");
+        System.out.println(properties.getProvider());
+        System.out.println(properties.getUser());
         Map<String, OauthProvider> oauthProvider = new HashMap<>();
 
         properties.getUser().forEach(

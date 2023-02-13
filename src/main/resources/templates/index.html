@@ -27,6 +27,9 @@
 <form th:unless="${userId}" action="/login" method="get">
     <button>로그인</button>
 </form>
+<form action="/oauth/login" method="get">
+    <button>oauth2 로그인</button>
+</form>
 <!--<form action="/admin/refresh" method="post">-->
 <!--    <button>accessToken 재발급</button>-->
 <!--</form>-->

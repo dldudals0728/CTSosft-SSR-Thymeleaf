@@ -27,7 +27,7 @@ oauth2:
 * `OauthProperties.java`
 ```java
 // 값을 바인딩 할 수 있는 상탱로 만들어준다.
-// application-oauth.yml 파일의 정보들을 객체로 바인딩한다.
+// application.yml 파일의 정보들을 객체로 바인딩한다.
 // oauth2 하위에 크게 user 와 provider 가 존재하기 때문에 하위에 존재하는 값들을 static class의 필드로 두어 값을 바인딩 받을 수 있는 상태로 만든다.
 // OauthProperties(this)를 이용하여 값을 바인딩 할 수 있는 상태로 만들었으면, 실제로 사용하기 위해 설정 파일(OauthConfig)을 만들어 주고,
 // @EnableConfigurationProperties annotation을 붙여 사용해준다.
@@ -185,7 +185,438 @@ public class OauthConfig {
 ```
 여기까지 진행하면 애플리케이션이 실행될 때, OAuth 서버 정보들을 객체로 만들어 메모리에 저장한다!!
 
-### +) 실제 로그인 구현해보기.
+#### controller / service / view
+이제 OAuth 토큰을 받도록 하는 controller / service / view를 만든다.
+
+* `oauth-index.html`
+
+주의사항
+1. login api 이동 주소 작성 시, 자신의 client-id 와 redirect-uri 를 정확하게 입력할 것.
+2. redirect-url 을 값을 받을 수 있는 주소로 controller 상에 정확히 작성할 것(url)
+
+```html
+<!-- 예시 -->
+<a href="https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email&client_id=88477443435-i5aok4n08mthen5cn2rl2mgrsh91s3ik.apps.googleusercontent.com&response_type=code&redirect_uri=http://localhost:8080/login/oauth2/code/google&access_type=offline">Google
+    Login</a><br>
+<!-- 포맷 -->
+<a href="https://accounts.google.com/o/oauth2/v2/auth?scope=https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email&client_id=[사용자 client-id]&response_type=code&redirect_uri=[사용자 redirect-uri]&access_type=offline">Google
+    Login</a><br>
+```
+view는 위에 보이는 것 처럼 요청 주소를 적어야 한다. (google의 경우 client-id / redirect-uri 를 사용자에 맞게 작성한다.)<br>
+그리고 redirect 될 수 있도록 컨트롤러를 작성한다.
+
+* `OauthController.java`
+
+```java
+@Controller
+public class OauthRestController {
+
+    private final OauthService oauthService;
+
+    public OauthRestController(OauthService oauthService) {
+        this.oauthService = oauthService;
+    }
+
+    @GetMapping("/login/oauth2/code/{provider}")
+    @ResponseBody
+    public ResponseEntity<LoginResponse> login(@PathVariable String provider, @RequestParam String code) {
+        LoginResponse loginResponse = oauthService.login(provider, code);
+        return ResponseEntity.ok().body(loginResponse);
+    }
+
+    // view 에 접속할 수 있게 하기 위한 mapping
+    @GetMapping("/oauth/login")
+    public String oauthLoginPage() {
+        return "oauth/oauth-index";
+    }
+}
+```
+다음은 controller 부분이다. controller 에서 OAuth 토큰을 받아오는 부분이 가장 위에 있는 /login/oauth2/code/{provider} mapping 이다.<br>
+여기서도 매핑할 때 redirect-uri에 맞춰서 매핑 주소를 입력해 주어야 한다.<br>
+나같은 경우는 "http://localhost:8080/login/oauth2/code/google"로 redirect-uri를 작성했다. 여기서 google 이 provider가 되는 것이다.
+
+* `OauthService.java`
+
+```java
+@Service
+public class OauthService {
+
+    private final InMemoryProviderRepository inMemoryProviderRepository;
+
+    public OauthService(InMemoryProviderRepository inMemoryProviderRepository) {
+        this.inMemoryProviderRepository = inMemoryProviderRepository;
+    }
+
+    public LoginResponse login(String providerName, String code) {
+        // 프론트에서 넘어온 provider 이름을 통해 InMemoryProviderRepository에서 OauthProvider 가져오기
+        OauthProvider provider = inMemoryProviderRepository.findByProviderName(providerName);
+
+        // TODO access token 가져오기
+        // TODO 유저 정보 가져오기
+        // TODO 유저 DB에 저장
+        return null;
+    }
+}
+```
+
+이게 우리가 사용항 service인데, 여기서 보이는 **LoginResponse** 순서에 맞게 나중에 뒤에서 코드를 보여준다.<br>
+이제 accessToken 이나 유저 정보를 가져오기 위해 실제 OAuth 서버와 통신을 해야 한다. 그러기 위해 WebClient 의존성을 추가해준다.
+
+* `pom.xml`
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+```
+
+* `build.gradle`
+
+```gradle
+implementation 'org.springframework.boot:spring-boot-starter-webflux'
+```
+
+이제 OAuth 서버와 통신해 access token을 받아올 DTO **OauthTokenResponse** 를 작성한다.
+
+* `OauthTokenResponse.java`
+
+```java
+@Getter
+@NoArgsConstructor
+public class OauthTokenResponse {
+    @JsonProperty("access_token")
+    private  String accessToken;
+    private  String scope;
+    @JsonProperty("token_type")
+    private String tokenType;
+
+    @Builder
+    public OauthTokenResponse(String accessToken, String scope, String tokenType) {
+        this.accessToken = accessToken;
+        this.scope = scope;
+        this.tokenType = tokenType;
+    }
+}
+```
+
+이제 service 에서 WebClient 를 이용하여 OAuth 서버와 통신하면 **OauthTokenResponse** 로 값을 받아올 수 있다.
+
+* `OauthService.java`<br>
+`mod: login function / add: tokenRequest, getToken function`
+
+```java
+@Service
+public class OauthService {
+    public LoginResponse login(String providerName, String code) {
+        // 프론트에서 넘어온 provider 이름을 통해 InMemoryProviderRepository에서 OauthProvider 가져오기
+        OauthProvider provider = inMemoryProviderRepository.findByProviderName(providerName);
+        
+        /////// 추가 부분 ///////
+        // access token 가져오기
+        OauthTokenResponse tokenResponse = getToken(code, provider);
+        //////////////////////
+
+        // TODO access token 가져오기
+        // TODO 유저 정보 가져오기
+        // TODO 유저 DB에 저장
+        return null;
+    }
+
+    private OauthTokenResponse getToken(String code, OauthProvider provider) {
+        return WebClient.create()
+                .post()
+                .uri(provider.getTokenUrl())
+                .headers(header -> {
+                    header.setBasicAuth(provider.getClientId(), provider.getClientSecret());
+                    header.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+                    header.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+                    header.setAcceptCharset(Collections.singletonList(StandardCharsets.UTF_8));
+                })
+                .bodyValue(this.tokenRequest(code, provider))
+                .retrieve()
+                .bodyToMono(OauthTokenResponse.class)
+                .block();
+    }
+
+    private MultiValueMap<String, String> tokenRequest(String code, OauthProvider provider) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("code", code);
+        formData.add("grant_type", "authorization_code");
+        formData.add("redirect_uri", provider.getRedirectUrl());
+
+        return formData;
+    }
+}
+```
+OAuth 서버와 통신할 때 WebClient를 사용해 OAuth 서버에 access token 요청을 하면 된다. 프로퍼티 파일에 적어줬던 access token을 요청할 수 있는 uri에 요청을 보내면 된다.<br>
+이 때 헤더에 client-id와 client-secret값으로 Basic Auth를 추가해주고, 컨텐츠 타입을 APPLICATION_FORM_URLENCODED로 설정해준다.<br>
+요청 바디에는 authorization code, redirect_uri 등을 넘겨주면 된다.
+
+이제 유저 정보를 가져온다. OAuth 서버 별로 가져올 수 있는 유저 정보가 다르다.<br>
+토큰과 마찬가지로 이를 받을 수 있는 **UserProfile** DTO를 작성해 준다.<br>
+<i>이번에는 oauthId, email, name, imageUrl 정도만 가져온다. 추가로 더 가져올 수 있는 항목들이 있는지 알아보자!!</i>
+
+* `UserProfile.java`
+
+```java
+@Getter
+public class UserProfile {
+    private final String oauthId;
+    private final String email;
+    private final String name;
+    private final String imageUrl;
+
+    @Builder
+    public UserProfile(String oauthId, String email, String name, String imageUrl) {
+        this.oauthId = oauthId;
+        this.email = email;
+        this.name = name;
+        this.imageUrl = imageUrl;
+    }
+
+    public Member toMember() {
+        return Member.builder()
+                .oauthId(this.oauthId)
+                .email(this.email)
+                .name(this.name)
+                .imageUrl(this.imageUrl)
+                .role(OauthRole.GUEST)
+                .build();
+    }
+}
+```
+마찬가지로 OAuth 서버와 WebClient 를 통해 통신하고, map으로 받아온다. Bearer 타입으로 Auth 헤더에 access token 값을 담아준다.
+
+* `OauthService.java`<br>
+  `mod: login function / add: getUserAttributes, getUserProfile function`
+
+```java
+@Service
+public class OauthService {
+    public LoginResponse login(String providerName, String code) {
+        // 프론트에서 넘어온 provider 이름을 통해 InMemoryProviderRepository에서 OauthProvider 가져오기
+        OauthProvider provider = inMemoryProviderRepository.findByProviderName(providerName);
+        
+        // access token 가져오기
+        OauthTokenResponse tokenResponse = getToken(code, provider);
+
+        /////// 추가 부분 ///////
+        // 유저 정보 가져오기
+        UserProfile userProfile = this.getUserProfile(providerName, tokenResponse, provider);
+        //////////////////////
+        
+        // TODO 유저 DB에 저장
+        return null;
+    }
+
+    private UserProfile getUserProfile(String providerName, OauthTokenResponse tokenResponse, OauthProvider provider) {
+        Map<String, Object> userAttributes = this.getUserAttributes(provider, tokenResponse);
+        // 유저 정보(map)를 통해 UserProfile 만들기
+        return OauthAttributes.extract(providerName, userAttributes);
+    }
+
+    // OAuth 서버에서 유저 정보 map으로 가져오기
+    private Map<String, Object> getUserAttributes(OauthProvider provider, OauthTokenResponse tokenResponse) {
+        return WebClient.create()
+                .get()
+                .uri(provider.getUserInfoUrl())
+                .headers(header -> header.setBearerAuth(tokenResponse.getAccessToken()))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+    }
+}
+```
+얻어온 유저 정보를 UserProfile로 만들어 줘야 하는데, OAuth 서버 별로 데이터의 key값이 다르다. 따라서 enum class 를 이용하여 서버별로 다른 key값들을 작성해준다.
+
+* `OauthAttributes.java`
+
+```java
+public enum OauthAttributes {
+    GITHUB("github") {
+        @Override
+        public UserProfile of(Map<String, Object> attributes) {
+            return UserProfile.builder()
+                    .oauthId(String.valueOf(attributes.get("id")))
+                    .email((String) attributes.get("email"))
+                    .name((String) attributes.get("name"))
+                    .imageUrl((String) attributes.get("avatar_url"))
+                    .build();
+        }
+    },
+    NAVER("naver") {
+        @Override
+        public UserProfile of(Map<String, Object> attributes) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+            return UserProfile.builder()
+                    .oauthId((String)response.get("id"))
+                    .email((String) response.get("email"))
+                    .name((String) response.get("name"))
+                    .imageUrl((String) response.get("profile_image"))
+                    .build();
+        }
+    },
+    GOOGLE("google") {
+        @Override
+        public UserProfile of(Map<String, Object> attributes) {
+            return UserProfile.builder()
+                    .oauthId(String.valueOf(attributes.get("id")))
+                    .email((String) attributes.get("email"))
+                    .name((String) attributes.get("name"))
+                    .imageUrl((String) attributes.get("picture"))
+                    .build();
+        }
+    };
+
+    private final String providerName;
+
+    OauthAttributes(String name) {
+        this.providerName = name;
+    }
+
+    public static UserProfile extract(String providerName, Map<String, Object> attributes) {
+        return Arrays.stream(values())
+                .filter(provider -> providerName.equals(provider.providerName))
+                .findFirst()
+                .orElseThrow(IllegalArgumentException::new)
+                .of(attributes);
+    }
+
+    public abstract UserProfile of(Map<String, Object> attributes);
+}
+```
+이렇게 만들어진 UserProfile을 DB에 저장하기 위해 **Member** class를 작성한다.
+
+* `Member.java`
+
+```java
+@Entity
+@Table
+@Getter
+@ToString
+public class Member {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String oauthId;
+    private String name;
+    private String email;
+    private String imageUrl;
+    @Enumerated(EnumType.STRING)
+    private OauthRole role;
+
+    protected Member() {}
+
+    @Builder
+    public Member(String oauthId, String name, String email, String imageUrl, OauthRole role) {
+        this(null, oauthId, name, email, imageUrl, role);
+    }
+
+    public Member(Long id, String oauthId, String name, String email, String imageUrl, OauthRole role) {
+        this.id = id;
+        this.oauthId = oauthId;
+        this.name = name;
+        this.email = email;
+        this.imageUrl = imageUrl;
+        this.role = role;
+    }
+
+    public Member update(String name, String email, String imageUrl) {
+        this.name = name;
+        this.email = email;
+        this.imageUrl = imageUrl;
+        return this;
+    }
+
+    public String getRoleKey() {
+        return this.role.getKey();
+    }
+}
+```
+
+그리고 front로 보낼 LoginResposne Dto를 작성한다.
+
+* `LoginResponse.java`
+
+```java
+@Getter
+@NoArgsConstructor
+public class LoginResponse {
+    private Long id;
+    private String name;
+    private String email;
+    private String imageUrl;
+    private OauthRole role;
+    private String tokenType;
+    private String accessToken;
+//    private String refreshToken;
+
+    @Builder
+    public LoginResponse(Long id, String name, String email, String imageUrl, OauthRole role, String tokenType, String accessToken) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.imageUrl = imageUrl;
+        this.role = role;
+        this.tokenType = tokenType;
+        this.accessToken = accessToken;
+//        this.refreshToken = refreshToken;
+    }
+}
+```
+
+마지막으로 member를 저장하고, 자체 애플리케이션에서 사용할 access token (refresh token도 있으면 추가한다.)을 생성해서 LoginResponse 에 담아서 전달한다.
+
+* `OauthService.java`<br>
+  `mod: login function / add: saveOrUpdate function`
+
+```java
+@Service
+public class OauthService {
+    public LoginResponse login(String providerName, String code) {
+        // 프론트에서 넘어온 provider 이름을 통해 InMemoryProviderRepository에서 OauthProvider 가져오기
+        OauthProvider provider = inMemoryProviderRepository.findByProviderName(providerName);
+        
+        // access token 가져오기
+        OauthTokenResponse tokenResponse = getToken(code, provider);
+        
+        // 유저 정보 가져오기
+        UserProfile userProfile = this.getUserProfile(providerName, tokenResponse, provider);
+
+        /////// 추가 부분 ///////
+        // 유저 DB에 저장
+        Member member = this.saveOrUpdate(userProfile);
+
+        // create JWT
+        String accessToken = jwtTokenProvider.generateAccessToken(String.valueOf(member.getId()));
+
+        return LoginResponse.builder()
+                .id(member.getId())
+                .name(member.getName())
+                .email(member.getEmail())
+                .imageUrl(member.getImageUrl())
+                .role(member.getRole())
+                .tokenType("Bearer")
+                .accessToken(accessToken)
+                .build();
+        //////////////////////
+    }
+
+    private Member saveOrUpdate(UserProfile userProfile) {
+        Member member = memberRepository.findByOauthId(userProfile.getOauthId())
+                .map(entity -> entity.update(
+                        userProfile.getEmail(), userProfile.getName(), userProfile.getImageUrl()
+                ))
+                .orElseGet(userProfile::toMember);
+
+        return member;
+    }
+}
+```
+
+이제 테스트 해봐라!! 아주 굿이에요 굿 ~~
 
 ### Report
 * error
@@ -203,6 +634,38 @@ public class OauthConfig {
 ```
 위처럼 @EnableConfigurationProperties annotation 을 이용하여 bean으로 등록하면서 함께 사용해 주자.<br>
 이렇게 해도 상단의 에러가 사라지게 된다!!
+<hr />
+
+* error
+```
+No suitable default ClientHttpConnector found
+```
+WebClient 사용 시 발생하는 오류이다. 해결 방법은 webflux dependency 를 수정해 주면 된다.
+```xml
+<!-- before -->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webflux</artifactId>
+</dependency>
+```
+```xml
+<!-- after -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+```
+<hr />
+
+* error
+
+OAuth2 코드 작성을 마치고 테스트를 진행해보니 NullPointException이 발생했다. 
+코드를 하나하나 확인해보니, application-oauth.yml 파일을 객체화 하는 과정에서 오류가 났다.
+
+application-oauth.yml 파일을 객체화 하지 못해서 OauthProperties 객체가 null로 반환되는 것이었다.
+
+진짜 별걸 다 해보다가, application-oauth.yml -> application.yml 로 파일 이름을 변경하니 정상적으로 OAuth2 인증이 되었다...!!
+application-oauth.yml 파일을 읽지 못하고, application.yml 파일만 읽을 수 있었던 것이다.
 <hr />
 
 * notification

@@ -82,6 +82,11 @@
             <optional>true</optional>
         </dependency>
         <!-- google oauth without spring security -->
+        <!-- oauth access token dmf 가져오기 위한 OAuth 서버와의 통신을 위한 webflux -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
 	</dependencies>
 
 	<build>

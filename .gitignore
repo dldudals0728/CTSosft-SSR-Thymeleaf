@@ -36,6 +36,7 @@ build/
 application.properties
 application-oauth.properties
 application-oauth.yml
+application.yml
 image
 
 ## mac ##
